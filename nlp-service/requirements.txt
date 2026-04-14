@@ -7,3 +7,6 @@ faiss-cpu
 pdfplumber
 python-docx
 PyMuPDF
+python-multipart
+yake
+numpy

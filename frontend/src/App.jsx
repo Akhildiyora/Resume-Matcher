@@ -1,13 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "react-hot-toast";
 import Upload from "./pages/Upload";
 import Jobs from "./pages/Jobs";
-import Dashboard from "./pages/Dashboard";
+import Match from "./pages/Match";
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster position="top-right" />
       <div className="min-h-screen bg-slate-950 text-slate-50">
         <header className="mx-auto max-w-6xl px-6 py-10">
           <p className="text-sm uppercase tracking-[0.3em] text-slate-400">
@@ -25,7 +27,7 @@ function App() {
         <main className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pb-12">
           <Upload />
           <Jobs />
-          <Dashboard />
+          <Match />
         </main>
       </div>
     </QueryClientProvider>

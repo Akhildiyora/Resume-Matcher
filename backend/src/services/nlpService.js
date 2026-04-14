@@ -1,13 +1,17 @@
 const axios = require("axios");
+const FormData = require("form-data");
+const fs = require("fs");
 
 const NLP_API = process.env.NLP_API_URL || "http://localhost:8000";
 
-const client = axios.create({
-  baseURL: NLP_API,
-  timeout: 15_000,
-});
+exports.parseResume = async (filePath) => {
+  const formData = new FormData();
+  formData.append("file", fs.createReadStream(filePath));
 
-exports.processResume = async (text) => {
-  const response = await client.post("/process", { text });
+  const response = await axios.post(`${NLP_API}/parse-resume`, formData, {
+    headers: formData.getHeaders(),
+    maxBodyLength: 20 * 1024 * 1024,
+  });
+
   return response.data;
 };

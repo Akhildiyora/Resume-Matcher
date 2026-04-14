@@ -1,27 +1,13 @@
 const express = require("express");
 const upload = require("../middleware/upload");
-const nlpService = require("../services/nlpService");
+const authMiddleware = require("../middleware/auth");
+const { uploadResume, getResume, compareResumes, improveResume } = require("../controllers/resumeController");
 
 const router = express.Router();
 
-router.post("/upload", upload.single("resume"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: "Resume is required" });
-  }
-
-  const fileText = req.body.text || "";
-
-  try {
-    const result = await nlpService.processResume(fileText);
-    res.json({
-      message: "File uploaded",
-      file: req.file,
-      nlp: result,
-    });
-  } catch (error) {
-    console.error("NLP service error", error.message);
-    res.status(502).json({ message: "Failed to process resume", error: error.message });
-  }
-});
+router.post("/upload-resume", upload.single("resume"), uploadResume);
+router.get("/:id", getResume);
+router.post("/compare", authMiddleware, compareResumes);
+router.post("/improve-resume", authMiddleware, improveResume);
 
 module.exports = router;
