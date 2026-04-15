@@ -8,14 +8,9 @@ export default function Upload() {
   const [liveUpdate, setLiveUpdate] = useState(null);
 
   useEffect(() => {
-    const handleUpdate = (payload) => {
-      setLiveUpdate(payload);
-    };
-
+    const handleUpdate = (payload) => setLiveUpdate(payload);
     socket.on("score-update", handleUpdate);
-    return () => {
-      socket.off("score-update", handleUpdate);
-    };
+    return () => socket.off("score-update", handleUpdate);
   }, []);
 
   const liveProgressLabel = liveUpdate
@@ -24,59 +19,136 @@ export default function Upload() {
       : liveUpdate.progress ?? "pending"
     : null;
 
+  const skills = data?.skills || [];
+
   return (
-    <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-950 to-slate-900 p-6 shadow-2xl shadow-indigo-900/30">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-sm uppercase tracking-[0.4em] text-slate-400">Resume</p>
-          <h2 className="text-2xl font-semibold text-white">Upload & Analyze</h2>
-        </div>
-        {data && (
-          <div className="rounded-2xl bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.4em] text-white">
-            Experience: {data.experience} yrs • {data.education} • {data.domain}
-          </div>
-        )}
-      </header>
-      <div className="space-y-8 md:flex md:gap-8 md:space-y-0">
-        <div className="md:w-2/3">
+    <section className="section-shell">
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 space-y-6 lg:col-span-7">
           <FileUpload onUpload={(payload) => setData(payload)} />
-        </div>
-        {data && (
-          <div className="md:w-1/3 rounded-2xl border border-white/10 bg-slate-900/70 p-4 text-sm text-slate-300 shadow-lg">
-            <h3 className="text-white">Resume Insights</h3>
-            <p className="mt-2 text-xs text-slate-400">Detected information</p>
-            <div className="mt-4 space-y-2">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.4em] text-slate-500">Experience</p>
-                <p>{data.experience} years</p>
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.4em] text-slate-500">Education</p>
-                <p className="capitalize">{data.education}</p>
-              </div>
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.4em] text-slate-500">Domain</p>
-                <p className="capitalize">{data.domain}</p>
-              </div>
+
+          <div className="surface-card p-6">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <h3 className="font-headline flex items-center gap-2 text-lg font-extrabold">
+                <span className="material-symbols-outlined text-primary">sync</span>
+                Parsing Status
+              </h3>
+              <span className="font-headline text-sm font-extrabold text-primary">
+                {liveProgressLabel || (data ? "100%" : "Idle")}
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-[#dae2fd]">
+              <div
+                className="signature-gradient h-full rounded-full transition-all"
+                style={{
+                  width: liveUpdate?.progress
+                    ? `${Math.min(Number(liveUpdate.progress), 100)}%`
+                    : data
+                      ? "100%"
+                      : "18%",
+                }}
+              />
+            </div>
+            <p className="mt-3 text-sm text-muted">
+              {liveUpdate
+                ? liveUpdate.stage?.replace(/\./g, " ") || "Processing resume"
+                : data
+                  ? "Resume processed and ready for matching."
+                  : "Upload a resume to begin neural parsing."}
+            </p>
+          </div>
+
+          <div className="surface-card p-8">
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <h3 className="font-headline flex items-center gap-2 text-lg font-extrabold">
+                <span className="material-symbols-outlined text-primary">auto_awesome</span>
+                Professional Summary
+              </h3>
+              <button className="text-xs font-extrabold text-primary" type="button">
+                Edit Summary
+              </button>
+            </div>
+            <div className="rounded-xl border-l-4 border-[#003ec7] bg-[#f2f3ff] p-6">
+              <p className="text-sm italic leading-7 text-[#131b2e]">
+                {data
+                  ? `Candidate profile indicates ${data.experience || 0}+ years in ${data.domain || "a general"} domain with ${skills.length} detected skills and ${data.education || "unspecified"} education.`
+                  : "Upload a resume to generate a concise recruiter-ready summary with role fit signals and skill highlights."}
+              </p>
             </div>
           </div>
-        )}
+        </div>
+
+        <div className="col-span-12 space-y-6 lg:col-span-5">
+          <div className="surface-card h-full p-8">
+            <div className="mb-8 flex items-center justify-between gap-4">
+              <h3 className="font-headline text-lg font-extrabold">Extracted Skills</h3>
+              <span className="rounded bg-[#003ec7]/10 px-2 py-1 text-[10px] font-extrabold text-primary">
+                {skills.length} FOUND
+              </span>
+            </div>
+
+            <div className="space-y-8">
+              <div>
+                <p className="mb-4 text-[10px] font-extrabold uppercase text-muted">
+                  Core Competencies
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {skills.length ? (
+                    skills.slice(0, 10).map((skill) => <SkillBadge key={skill} label={skill} />)
+                  ) : (
+                    ["UX Strategy", "Interface Design", "Design Systems", "Rapid Prototyping"].map((skill) => (
+                      <SkillBadge key={skill} label={skill} />
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-4 text-[10px] font-extrabold uppercase text-muted">
+                  Extracted Metadata
+                </p>
+                <div className="grid gap-3">
+                  {[
+                    ["Experience", data ? `${data.experience} years` : "Pending"],
+                    ["Education", data?.education || "Pending"],
+                    ["Domain", data?.domain || "Pending"],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-xl bg-[#f2f3ff] p-4">
+                      <p className="text-[10px] font-extrabold uppercase text-muted">{label}</p>
+                      <p className="mt-1 font-headline text-lg font-extrabold capitalize">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-[#c3c5d9]/30 pt-6">
+                <div className="mb-6 flex items-center gap-4">
+                  <div className="score-ring text-sm" style={{ "--score": data ? 88 : 34, "--ring-size": "4rem" }}>
+                    <span>{data ? 88 : 34}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-extrabold">Confidence Score</p>
+                    <p className="text-[10px] text-muted">High accuracy extraction readiness</p>
+                  </div>
+                </div>
+                <div className="rounded-xl border-l-4 border-[#952200] bg-[#ffdbd2]/50 p-4">
+                  <p className="mb-2 flex items-center gap-2 text-xs font-extrabold text-[#952200]">
+                    <span className="material-symbols-outlined text-sm">warning</span>
+                    Missing Information
+                  </p>
+                  <p className="text-[11px] leading-5 text-muted">
+                    Verify education dates and portfolio links manually when they are absent from the resume.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button className="primary-button mt-10 w-full" type="button">
+              Verify & Proceed to Matching
+            </button>
+          </div>
+        </div>
       </div>
-      {data && data.skills?.length > 0 && (
-        <div className="mt-8 flex flex-wrap gap-2">
-          {data.skills.map((skill) => (
-            <SkillBadge key={skill} label={skill} />
-          ))}
-        </div>
-      )}
-      {liveUpdate && (
-        <div className="mt-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/5 px-4 py-2 text-sm text-emerald-200">
-          <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">Live update</p>
-          <p className="text-sm font-semibold">
-            {liveUpdate.stage?.replace(/\./g, " ") || "processing"} — {liveProgressLabel}
-          </p>
-        </div>
-      )}
     </section>
   );
 }

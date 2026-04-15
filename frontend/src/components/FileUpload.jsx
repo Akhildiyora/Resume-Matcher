@@ -5,6 +5,12 @@ import api from "../api/api";
 export default function FileUpload({ onUpload }) {
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState("Awaiting file");
+  const [isDragging, setIsDragging] = useState(false);
+
+  const selectFile = (nextFile) => {
+    setFile(nextFile);
+    setStatus(nextFile ? "Ready to upload" : "Awaiting file");
+  };
 
   const handleUpload = async () => {
     if (!file) {
@@ -31,23 +37,57 @@ export default function FileUpload({ onUpload }) {
   };
 
   return (
-    <div className="border-2 border-dashed border-slate-400 rounded-xl p-6 text-center">
-      <p className="text-sm text-slate-500">Drag & drop or select a file</p>
-      <input
-        type="file"
-        className="mt-4 block mx-auto"
-        onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-      />
-      <button
-        className="mt-4 rounded-lg bg-indigo-500 px-6 py-2 text-white shadow-lg shadow-indigo-500/40"
-        onClick={handleUpload}
-        disabled={!file}
+    <div className="surface-card relative overflow-hidden p-8">
+      <div className="pointer-events-none absolute inset-0 bg-[#003ec7]/5 opacity-0 transition-opacity" />
+      <label
+        className={`group flex min-h-[22rem] flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition ${
+          isDragging
+            ? "border-[#003ec7] bg-[#dde1ff]"
+            : "border-[#c3c5d9]/60 bg-white hover:border-[#003ec7]/40 hover:bg-[#faf8ff]"
+        }`}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDragging(false);
+          selectFile(event.dataTransfer.files?.[0] ?? null);
+        }}
       >
-        {status === "Uploading..." ? "Processing..." : "Upload Resume"}
-      </button>
-      <p className="mt-2 text-xs uppercase tracking-[0.3em] text-slate-400">
-        {status}
-      </p>
+        <span className="grid h-16 w-16 place-items-center rounded-full bg-[#f2f3ff] text-[#003ec7] transition-transform group-hover:scale-110">
+          <span className="material-symbols-outlined text-4xl">cloud_upload</span>
+        </span>
+        <span className="font-headline mt-6 text-2xl font-extrabold text-[#131b2e]">
+          Drop resume here
+        </span>
+        <span className="mt-2 max-w-md text-sm leading-6 text-[#434656]">
+          Support for PDF, DOCX, and TXT files up to 10MB. Neural parsing extracts
+          skills, education, domain, and experience in seconds.
+        </span>
+        <input
+          type="file"
+          className="sr-only"
+          accept=".pdf,.doc,.docx,.txt"
+          onChange={(event) => selectFile(event.target.files?.[0] ?? null)}
+        />
+        <span className="mt-6 rounded-xl bg-[#dae2fd] px-6 py-2.5 text-sm font-extrabold text-[#131b2e] transition-all group-hover:bg-[#003ec7] group-hover:text-white">
+          {file ? file.name : "Browse Files"}
+        </span>
+      </label>
+
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm font-bold text-[#434656]">{status}</p>
+        <button
+          className="primary-button"
+          onClick={handleUpload}
+          disabled={!file || status === "Uploading..."}
+          type="button"
+        >
+          {status === "Uploading..." ? "Processing..." : "Upload Resume"}
+        </button>
+      </div>
     </div>
   );
 }
